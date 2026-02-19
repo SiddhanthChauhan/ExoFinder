@@ -36,6 +36,9 @@ app.get('/', (req, res) => {
 app.get('/stars', (req, res) => {
     let sql = "SELECT * FROM stars";//this query gets sent to sql
     const searchTerm = req.query.search;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 50;
+    const offset = (page - 1) * limit;
 
     let params = [];
 
@@ -43,7 +46,7 @@ app.get('/stars', (req, res) => {
         sql += " WHERE name LIKE ?";
         params.push(`%${searchTerm}%`);
     }
-    sql += " LIMIT 50"; //Limiting to 50
+    sql += ` LIMIT ${limit} OFFSET ${offset}`;
 
     db.query(sql, params, (err, results) => {
         if (err) {
@@ -68,6 +71,32 @@ app.get('/planets', (req, res) => {
             return;
         }
         res.json(results);
+    })
+})
+
+//Route to the star system details
+app.get('/stars/:id', (req,res) => {
+    const starId = req.params.id;
+
+    //two queries to access the star and its planets
+    const starSQL = "SELECT * FROM stars WHERE id=?";
+    const planetSQL = "SELECT * FROM planets WHERE id=?";
+
+    //finding star
+    db.query(starSQL,[starId],(err,starResults) => {
+        if (err) return res.status(500).json(err);
+        if (starResults.length === 0) return res.status(404).json({ message: "Star not found" });
+
+        //finding its planets
+        db.query(planetSQL,[starId], (err,planetResults) => {
+            if (err) return res.status(500).json(err);
+
+            //sending them together
+            res.json({
+                star: starResults[0],
+                planets: planetResults
+            });
+        })
     })
 })
 
