@@ -53,6 +53,17 @@ function SystemDetail() {
             <div className="bg-white border-2 border-gray-200 p-8 rounded-lg shadow-lg">
                 <h1 className="text-5xl font-extrabold text-gray-800 mb-4">{star.name}</h1>
 
+                {/* --- SYSTEM LORE & ASTROPHYSICS --- */}
+                <div className="bg-indigo-50 border-l-4 border-indigo-500 p-6 rounded-r-lg mb-8">
+                    <h3 className="text-xl font-bold text-indigo-900 mb-2">System Overview</h3>
+                    <p className="text-gray-800 text-lg leading-relaxed">
+                        {star.lore
+                            ? star.lore
+                            : `A distinct celestial body located ${star.distance_ly ? star.distance_ly + ' light years away' : 'deep'} in the cosmos. Characterized by a surface temperature of ${star.temperature_k ? star.temperature_k + 'K' : 'unrecorded metrics'}, this system stands as a unique testament to the vast structural diversity of our galaxy.`
+                        }
+                    </p>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4 text-lg text-gray-600 mb-8 border-b-2 pb-6">
                     <p><strong>Spectral Type:</strong> {star.spectral_type}</p>
                     <p><strong>Distance:</strong> {star.distance_ly ? `${star.distance_ly} Light Years` : 'Unknown'}</p>
