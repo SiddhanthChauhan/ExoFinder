@@ -75,20 +75,20 @@ app.get('/planets', (req, res) => {
 })
 
 //Route to the star system details
-app.get('/stars/:id', (req,res) => {
+app.get('/stars/:id', (req, res) => {
     const starId = req.params.id;
 
     //two queries to access the star and its planets
     const starSQL = "SELECT * FROM stars WHERE id=?";
-    const planetSQL = "SELECT * FROM planets WHERE id=?";
+    const planetSQL = "SELECT * FROM planets WHERE star_id=?";
 
     //finding star
-    db.query(starSQL,[starId],(err,starResults) => {
+    db.query(starSQL, [starId], (err, starResults) => {
         if (err) return res.status(500).json(err);
         if (starResults.length === 0) return res.status(404).json({ message: "Star not found" });
 
         //finding its planets
-        db.query(planetSQL,[starId], (err,planetResults) => {
+        db.query(planetSQL, [starId], (err, planetResults) => {
             if (err) return res.status(500).json(err);
 
             //sending them together
