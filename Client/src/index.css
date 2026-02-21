@@ -1,1 +1,17 @@
+/* 1. Import your custom font from Google */
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
+
+/* 2. Import Tailwind v4 */
 @import "tailwindcss";
+
+/* 3. The new v4 way to configure your theme */
+@theme {
+  /* Overriding the default sans font applies it globally to your entire app */
+  --font-sans: "Audiowide", sans-serif;
+}
+
+/* 4. Base styles for the deep space aesthetic */
+body {
+  background-color: #000000;
+  color: #ffffff;
+}
