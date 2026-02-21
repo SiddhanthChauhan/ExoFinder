@@ -130,6 +130,9 @@ function Explore() {
 
     return (
         <div className="min-h-screen p-6 md:p-10 max-w-7xl mx-auto">
+            {/* Background Decorations */}
+            <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-indigo-900/20 blur-[150px] rounded-full pointer-events-none"></div>
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
             <div className="flex flex-col items-center text-center mb-12 mt-4">
 
 
