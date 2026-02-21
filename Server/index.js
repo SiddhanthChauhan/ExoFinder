@@ -36,9 +36,7 @@ app.get('/', (req, res) => {
 app.get('/stars', (req, res) => {
     let sql = "SELECT * FROM stars";//this query gets sent to sql
     const searchTerm = req.query.search;
-    const page = parseInt(req.query.page) || 1;
-    const limit = 50;
-    const offset = (page - 1) * limit;
+
 
     let params = [];
 
@@ -46,7 +44,17 @@ app.get('/stars', (req, res) => {
         sql += " WHERE name LIKE ?";
         params.push(`%${searchTerm}%`);
     }
-    sql += ` LIMIT ${limit} OFFSET ${offset}`;
+    // Changes : Added condition for the game mode where all stars are required and not ust first 50
+    if (req.query.limit === 'all') {
+        // If React asks for 'all', we skip the LIMIT entirely to fetch the whole DB!
+        // (We don't append anything to the SQL string here)
+    } else {
+        // Otherwise, fallback to the standard 50-per-page for the Database view
+        const page = parseInt(req.query.page) || 1;
+        const limit = 50;
+        const offset = (page - 1) * limit;
+        sql += ` LIMIT ${limit} OFFSET ${offset}`;
+    }
 
     db.query(sql, params, (err, results) => {
         if (err) {

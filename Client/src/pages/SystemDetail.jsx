@@ -44,96 +44,147 @@ function SystemDetail() {
     console.log("Planets Array:", planets);
 
     return (
-        <div className="p-8 max-w-4xl mx-auto">
-            <Link to="/explore">
-                <button className="mb-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded font-bold transition-colors">
-                    ← Back to Database
-                </button>
-            </Link>
-            <div className="bg-white border-2 border-gray-200 p-8 rounded-lg shadow-lg">
-                <h1 className="text-5xl font-extrabold text-gray-800 mb-4">{star.name}</h1>
+        <div className="min-h-screen bg-[#050510] text-gray-200 relative overflow-hidden font-sans">
+            {/* Background Decorations */}
+            <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-indigo-900/20 blur-[150px] rounded-full pointer-events-none"></div>
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
+
+            <div className="relative z-10 max-w-7xl mx-auto p-6 md:p-10 pt-12">
+
+                <Link
+                    to="/explore"
+                    className="inline-flex items-center gap-3 text-indigo-400 hover:text-indigo-200 transition-all duration-300 group mb-12"
+                >
+                    <span className="text-2xl transform transition-transform duration-300 group-hover:-translate-x-2 text-indigo-500 drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]">
+                        &laquo;
+                    </span>
+                    <span className="uppercase tracking-[0.3em] text-xs font-bold border-b border-transparent group-hover:border-indigo-400/50 pb-1">
+                        Abort Scan
+                    </span>
+                </Link>
+
+
+                <div className="mb-12 border-l-4 border-indigo-500 pl-8 py-2">
+                    <h1 className="text-6xl md:text-7xl font-black text-white tracking-tighter mb-2 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                        {star.name}
+                    </h1>
+                    <div className="flex flex-wrap gap-6 items-center">
+                        <span className="px-4 py-1 bg-indigo-600/30 border border-indigo-500/50 text-indigo-300 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase">
+                            SECTOR: {getConstellation(star.ra, star.dec_deg, star.name)}
+                        </span>
+                        <span className="text-gray-500 tracking-widest text-[10px] font-bold uppercase flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
+                            Deep Scan Active
+                        </span>
+                    </div>
+                </div>
 
                 {/* --- SYSTEM LORE & ASTROPHYSICS --- */}
-                <div className="bg-indigo-50 border-l-4 border-indigo-500 p-6 rounded-r-lg mb-8">
-                    <h3 className="text-xl font-bold text-indigo-900 mb-2">System Overview</h3>
-                    <p className="text-gray-800 text-lg leading-relaxed">
+                {/* THE ANALYSIS CARD */}
+                <div className="bg-indigo-950/20 backdrop-blur-md border border-indigo-500/30 p-8 rounded-2xl mb-12 shadow-[0_0_20px_rgba(0,0,0,0.3)] relative group">
+                    {/* Decorative corner bracket */}
+                    <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-indigo-400 rounded-tl-lg"></div>
+
+                    <h3 className="text-xs font-bold text-indigo-400 tracking-[0.3em] uppercase mb-4">Computer Analysis</h3>
+                    <p className="text-indigo-100 text-xl leading-relaxed font-light tracking-wide">
                         {star.lore
                             ? star.lore
-                            : `A distinct celestial body located ${star.distance_ly ? star.distance_ly + ' light years away' : 'deep'} in the cosmos. Characterized by a surface temperature of ${star.temperature_k ? star.temperature_k + 'K' : 'unrecorded metrics'}, this system stands as a unique testament to the vast structural diversity of our galaxy.`
+                            : `Spectral analysis confirms a ${star.spectral_type || 'unclassified'}-type star located ${star.distance_ly ? star.distance_ly + ' light years' : 'at unknown depth'} from Earth. Scanning for habitability signatures...`
                         }
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-lg text-gray-600 mb-8 border-b-2 pb-6">
-                    <p><strong>Spectral Type:</strong> {star.spectral_type}</p>
-                    <p><strong>Distance:</strong> {star.distance_ly ? `${star.distance_ly} Light Years` : 'Unknown'}</p>
-                    <p><strong>Temperature:</strong> {star.temperature_k ? `${star.temperature_k} K` : 'Unknown'}</p>
-                    <p><strong>Visibility:</strong> {star.v_mag !== null && star.v_mag < 6 ? "👀 Naked Eye" : "🔭 Telescope"}</p>
+                {/* --- SYSTEM TELEMETRY GRID --- */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+                    {[
+                        { label: "Spectral Class", value: star.spectral_type, icon: "✨" },
+                        { label: "Distance", value: star.distance_ly ? `${star.distance_ly} LY` : "Unknown" },
+                        { label: "Temperature", value: star.temperature_k ? `${star.temperature_k} K` : "Unknown" },
+                        { label: "Visibility", value: star.v_mag !== null && star.v_mag < 6 ? "Naked Eye" : "Telescope" }
+                    ].map((item, i) => (
+                        <div key={i} className="bg-indigo-950/40 border border-indigo-500/20 p-4 rounded-xl backdrop-blur-sm group hover:border-indigo-400/50 transition-all">
+                            <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-1">{item.label}</p>
+                            <p className="text-xl font-bold text-white group-hover:text-indigo-300 transition-colors">
+                                {item.value}
+                            </p>
+                        </div>
+                    ))}
                 </div>
 
-                <h3 className="text-3xl font-bold text-gray-800 mb-4">Orbiting Planets ({planets.length})</h3>
+                {/* --- PLANETARY SCANNER --- */}
+                <h3 className="text-2xl font-bold text-white mb-6 tracking-tight flex items-center gap-3">
+                    <span className="text-indigo-500">Orbiting Bodies</span>
+                    <span className="text-sm bg-indigo-500/20 px-3 py-1 rounded-full text-indigo-300 font-mono">
+                        COUNT: {planets.length}
+                    </span>
+                </h3>
 
                 {planets.length === 0 ? (
-                    <p className="text-gray-500 italic">No planets recorded in this system.</p>
+                    <p className="text-indigo-400/50 italic mb-12">No planetary bodies detected in this sector.</p>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
                         {planets.map(planet => (
-
-                            <div key={planet.id} className="p-4 bg-gray-50 border border-gray-200 rounded-md shadow-sm">
-                                <h4 className="text-xl font-bold text-blue-600 mb-2">{planet.name}</h4>
-                                <div className="flex gap-6 text-sm">
-                                    <p><strong>Mass:</strong> {planet.mass_jup ? `${planet.mass_jup} Jupiters` : 'Unknown'}</p>
-                                    <p><strong>Radius:</strong> {planet.radius_jup ? `${planet.radius_jup} Jupiters` : 'Unknown'}</p>
-                                    <p><strong>Orbital Period:</strong> {planet.orbital_period_days ? `${planet.orbital_period_days} days` : 'Unknown'}</p>
-                                    <p>
-                                        {planet.is_habitable ?
-                                            <span className="text-green-600 font-bold">🌱 Potentially Habitable</span> :
-                                            <span className="text-red-500 font-bold">🪨 Extreme Climate</span>
-                                        }
-                                    </p>
+                            <div key={planet.id} className="p-5 bg-indigo-950/20 border border-indigo-500/20 rounded-2xl hover:bg-indigo-900/30 transition-all group">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h4 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors">{planet.name}</h4>
+                                    {planet.is_habitable ?
+                                        <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded-md font-bold uppercase animate-pulse">Habitable</span> :
+                                        <span className="text-[10px] bg-red-900/20 text-red-400 px-2 py-1 rounded-md font-bold uppercase">Hostile</span>
+                                    }
+                                </div>
+                                <div className="grid grid-cols-2 gap-y-3 text-xs">
+                                    <p className="text-gray-500">Mass: <span className="text-gray-300">{planet.mass_jup ? `${planet.mass_jup} MJ` : 'N/A'}</span></p>
+                                    <p className="text-gray-500">Radius: <span className="text-gray-300">{planet.radius_jup ? `${planet.radius_jup} RJ` : 'N/A'}</span></p>
+                                    <p className="text-gray-500 col-span-2">Orbital Period: <span className="text-gray-300">{planet.orbital_period_days ? `${planet.orbital_period_days} Days` : 'Unknown'}</span></p>
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
-            </div>
-            {/* --- TELESCOPE MODULE --- */}
-            {star.ra && star.dec_deg ? (
-                <SkyMap ra={star.ra} dec={star.dec_deg} starName={star.name} />
-            ) : (
-                <p className="mt-8 text-red-500 italic">Observatory coordinates unavailable for this system.</p>
-            )}
 
-            {/* To help the astronomers , a guide */}
-            <div className="mt-8 bg-gray-900 p-8 rounded-lg shadow-xl border border-gray-700">
-                <h3 className="text-3xl font-bold text-blue-400 mb-2">🔭 Local Stargazer's Guide</h3>
-                <p className="text-gray-300 mb-6 text-lg">
-                    Step outside and locate this system in your night sky.
-                </p>
-
-                <div className="flex flex-col md:flex-row gap-6 items-stretch">
-                    {/* Level 1: The Constellation */}
-                    <div className="flex-1 bg-gray-800 p-6 rounded-lg border border-gray-600 flex flex-col justify-center">
-                        <p className="text-sm text-gray-400 uppercase tracking-wider font-bold mb-1">General Direction</p>
-                        <p className="text-2xl font-extrabold text-yellow-400">
-                            {getConstellation(star.ra, star.dec_deg, star.name)}
-                        </p>
-                    </div>
-
-                    {/* Level 3: The Exact Coordinate Handoff */}
-                    <a
-                        href={`https://in-the-sky.org/skymap.php?ra=${star.ra / 15}&dec=${star.dec_deg}&zoom=120`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex-1 flex flex-col justify-center items-center px-6 py-6 bg-blue-700 hover:bg-blue-600 text-white text-xl font-bold rounded-lg transition-colors shadow-lg"
-                    >
-                        <span>🧭 View Local Star Map</span>
-                        <span className="text-sm font-normal text-blue-200 mt-1">Uses precise observatory coordinates</span>
-                    </a>
+                {/* --- TELESCOPE MODULE --- */}
+                <div className="mb-12 rounded-3xl overflow-hidden border border-indigo-500/30 shadow-[0_0_30px_rgba(79,70,229,0.2)]">
+                    {star.ra && star.dec_deg ? (
+                        <SkyMap ra={star.ra} dec={star.dec_deg} starName={star.name} />
+                    ) : (
+                        <div className="p-10 text-center bg-indigo-950/20">
+                            <p className="text-red-400 italic uppercase tracking-widest text-xs font-bold">Observatory coordinates unavailable for this system.</p>
+                        </div>
+                    )}
                 </div>
-            </div>
+
+                {/* --- LOCAL STARGAZER'S GUIDE --- */}
+                <div className="mt-8 bg-indigo-950/20 backdrop-blur-md p-8 rounded-3xl border border-indigo-500/30 shadow-[0_0_20px_rgba(0,0,0,0.5)] relative group">
+                    <h3 className="text-2xl font-bold text-indigo-300 mb-2 tracking-tight uppercase">🔭 Local Stargazer's Guide</h3>
+                    <p className="text-indigo-200/70 mb-8 text-sm uppercase tracking-widest">
+                        Engage manual observatory tracking.
+                    </p>
+
+                    <div className="flex flex-col md:flex-row gap-6 items-stretch">
+                        {/* Constellation Panel */}
+                        <div className="flex-1 bg-indigo-900/10 p-6 rounded-2xl border border-indigo-500/20 flex flex-col justify-center">
+                            <p className="text-[10px] text-indigo-400 uppercase tracking-[0.2em] font-bold mb-2">Target Constellation</p>
+                            <p className="text-2xl font-black text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">
+                                {getConstellation(star.ra, star.dec_deg, star.name)}
+                            </p>
+                        </div>
+
+                        {/* External Coordinate Link */}
+                        <a
+                            href={`https://in-the-sky.org/skymap.php?ra=${star.ra / 15}&dec=${star.dec_deg}&zoom=120`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 flex flex-col justify-center items-center px-6 py-6 bg-indigo-600/20 hover:bg-indigo-500/30 border border-indigo-500/50 text-white rounded-2xl transition-all shadow-[0_0_15px_rgba(79,70,229,0.2)] hover:shadow-[0_0_25px_rgba(79,70,229,0.4)] group-hover:border-indigo-400"
+                        >
+                            <span className="text-xl font-bold uppercase tracking-widest mb-1">Observation Coordinates</span>
+                            <span className="text-xs font-normal text-indigo-300">Open external star map</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div> {/* <--- THIS CLOSES THE MAIN relative z-10 WINDOW */}
         </div>
     );
 }
 
-export default SystemDetail
+export default SystemDetail;

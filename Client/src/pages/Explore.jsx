@@ -17,6 +17,8 @@ function Explore() {
 
     //to reduce the probability of stars found , lets map them
     const [scannedStarIds, setScannedStarIds] = useState([]); // THE MEMORY BANK
+    //To avoid the pagination issue that looks at only the data on the page
+    const [gamePool, setGamePool] = useState([]); // all stars for the game
 
     useEffect(() => {
         // 1. Fetch Stars
@@ -31,32 +33,39 @@ function Explore() {
     }, [searchTerm, page])
 
     //Function to generate 3 random stars from the DB
-    const generateSectors = () => {
-        if (stars.length < 3) return; //as we need 3 stars
-
-        // PROPER SHUFFLE: Fisher-Yates Algorithm
-        // This guarantees a mathematically perfect random shuffle every single time
-        const shuffled = [...stars];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        const selected = shuffled.slice(0, 3);
-
-        setRadarSectors(selected); //feed the current guess
-        setRadarStatus('scanning'); // status update
-        setSelectedSector(null);//previous sector ko clear 
-
-        //logging those already scanned
-        setScannedStarIds(selected.map(s => s.id));
-    }
-
+    // Wait for the Radar mode to be clicked
     useEffect(() => {
-        if (viewMode == 'radar') {
-            generateSectors(); //run the function to get sectores
-            setScanCount(0);
+        if (viewMode === 'radar') {
+            // 1. Download the massive tank of stars
+            axios.get('http://localhost:3001/stars?limit=all')
+                .then(res => {
+                    const fullUniverse = res.data;
+                    setGamePool(fullUniverse);
+                    setScanCount(0);
+                    setScannedStarIds([]);
+
+                    // 2. ONLY AFTER it downloads, shuffle and deal the first 3 cards
+                    if (fullUniverse.length > 2) {
+                        const shuffled = [...fullUniverse];
+                        for (let i = shuffled.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                        }
+                        const selected = shuffled.slice(0, 3);
+
+                        setRadarSectors(selected);
+                        setRadarStatus('scanning');
+                        setSelectedSector(null);
+
+                        // Log these first 3 in the memory bank
+                        setScannedStarIds(selected.map(s => s.id));
+                    }
+                })
+                .catch(err => console.error("Error loading the universe: ", err));
         }
-    }, [viewMode, stars]);
+    }, [viewMode]);
+
+
 
     //function to check the user guesses
     const handleSectorClick = (star) => {
@@ -72,12 +81,12 @@ function Explore() {
         setScanCount(prev => prev + 1);//increase the count of tries
 
         // This resets the old card to the "eye" view with fresh data behind it
-        if (selectedSector) {
+        if (selectedSector && gamePool.length > 0) {
             // Create an array of only the stars we haven't scanned yet
-            const unseenStars = stars.filter(s => !scannedStarIds.includes(s.id));
+            const unseenStars = gamePool.filter(s => !scannedStarIds.includes(s.id));
 
             // Safety net: If you somehow click 3,000 times, reset the pool so it doesn't crash
-            const poolToUse = unseenStars.length > 0 ? unseenStars : stars;
+            const poolToUse = unseenStars.length > 0 ? unseenStars : gamePool;
             let replacementStar = poolToUse[Math.floor((Math.random() * poolToUse.length))];
 
             while (radarSectors.some(s => s.id === replacementStar.id || replacementStar.id === star.id)) {
@@ -88,6 +97,9 @@ function Explore() {
                 sector.id === selectedSector.id ? replacementStar : sector
                 //if previous sector is same as current -> change otherwise keep it same
             ))
+
+            // Adding the new star to the memory bank so it never repeats
+            setScannedStarIds(prev => [...prev, replacementStar.id]);
         }
 
         setSelectedSector(star);
@@ -117,16 +129,27 @@ function Explore() {
 
 
     return (
-        <div style={{ padding: '20px' }}>
-            <h1 className="text-4xl font-bold text-blue-600">ExoFinder 🪐</h1>
-            <h2>Systems Discovered: {stars.length}</h2>
-            <input
-                type="text"
-                placeholder="Search for a star system (e.g., Kepler)..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ padding: '10px', width: '100%', maxWidth: '400px', marginBottom: '20px', fontSize: '16px' }}
-            />
+        <div className="min-h-screen p-6 md:p-10 max-w-7xl mx-auto">
+            <div className="flex flex-col items-center text-center mb-12 mt-4">
+
+
+                <h1 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 tracking-widest drop-shadow-[0_0_15px_rgba(99,102,241,0.5)] mb-3">ExoFinder🔭</h1>
+                <h2 className="text-indigo-400 uppercase tracking-[0.3em] text-sm md:text-base font-semibold mb-10">
+                    Systems Fetched: <span className="text-white">{stars.length}</span>
+                </h2>
+                {/* The Glowing Terminal Search Bar */}
+                <div className="w-full max-w-2xl relative group">
+                    <input
+                        type="text"
+                        placeholder="INITIATE SYSTEM SEARCH (E.G., KEPLER)..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-indigo-950/20 backdrop-blur-md border border-indigo-500/30 text-indigo-200 placeholder-indigo-500/50 px-8 py-4 rounded-full focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-all duration-300 text-center tracking-widest shadow-[0_0_20px_rgba(79,70,229,0.1)] focus:shadow-[0_0_30px_rgba(79,70,229,0.4)] uppercase text-sm md:text-base"
+                    />
+                    {/* Sci-Fi Blinking Cursor Accent */}
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 w-2 h-5 bg-indigo-400/60 animate-pulse rounded-sm pointer-events-none group-focus-within:bg-indigo-300"></div>
+                </div>
+            </div>
 
             {/* --- A toggler for changing view mode--- */}
             <div className="flex justify-center mb-8">
@@ -151,46 +174,82 @@ function Explore() {
             {/* --- DYNAMIC VIEW PORTAL --- */}
             <div className="min-h-[700px] w-full mt-8">
 
-                {/* 🟢 DATABASE MODE: Shows the list and pagination */}
+                {/* DATABASE MODE: Shows the list and pagination */}
                 {viewMode === 'database' && (
                     <div className="animate-fade-in">
-                        {stars.map(star => {
-                            const starPlanets = planets.filter(planet => planet.star_id === star.id);
-                            return (
-                                <div key={star.id} style={{ border: '1px solid #ddd', margin: '20px 0', padding: '20px', borderRadius: '8px', backgroundColor: '#f8f9fa' }}>
-                                    <Link to={`/system/${star.id}`}>
-                                        <h2 style={{ color: '#2c3e50', margin: '0 0 10px 0' }}>{star.name}</h2>
-                                        <div style={{ display: 'flex', gap: '20px', fontSize: '14px', color: '#555' }}>
-                                            <p><strong>Type:</strong> {star.spectral_type}</p>
-                                            <p><strong>Temp:</strong> {star.temperature_k ? `${star.temperature_k} K` : 'Unknown'}</p>
-                                            <p><strong>Distance:</strong> {star.distance_ly ? `${star.distance_ly} LY` : 'Unknown'}</p>
-                                            <p><strong>Visibility:</strong> {star.v_mag !== null && star.v_mag < 6 ? "👀 Naked Eye" : "🔭 Telescope"}</p>
-                                        </div>
-                                        <div style={{ marginTop: '15px', paddingLeft: '20px', borderLeft: '3px solid #3498db' }}>
-                                            <h4 style={{ margin: '0 0 10px 0' }}>Orbiting Planets ({starPlanets.length}):</h4>
-                                            {starPlanets.length === 0 ? <p style={{ fontSize: '14px', color: '#7f8c8d' }}>No planets found...</p> : (
-                                                <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                                                    {starPlanets.map(planet => (
-                                                        <li key={planet.id} style={{ marginBottom: '5px', color: '#000' }}>
-                                                            <strong>{planet.name}</strong>
-                                                            <span style={{ marginLeft: '10px', fontSize: '14px' }}>
-                                                                {planet.is_habitable ? "🌱 Potentially Habitable" : "🪨 Extreme Climate"}
-                                                            </span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </div>
-                                    </Link>
-                                </div>
-                            )
-                        })}
+                        {/* THE GRID CONTAINER */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {stars.map(star => {
+                                const starPlanets = planets.filter(planet => planet.star_id === star.id);
+                                return (
+                                    // THE GLASSMORPHISM CARD
+                                    <div
+                                        key={star.id}
+                                        className="relative group bg-indigo-950/20 backdrop-blur-md border border-indigo-500/30 p-6 rounded-2xl hover:-translate-y-2 hover:border-indigo-400 hover:shadow-[0_0_30px_rgba(99,102,241,0.3)] transition-all duration-300"
+                                    >
+                                        <Link to={`/system/${star.id}`}>
 
-                        {/* Pagination Controls (Only visible in Database mode) */}
-                        <div className="flex justify-center items-center gap-6 my-8">
-                            <button onClick={() => setPage(page - 1)} disabled={page === 1} className="px-6 py-2 bg-blue-600 text-white font-bold rounded shadow-md hover:bg-blue-700 disabled:bg-gray-400 transition-colors">Previous</button>
-                            <span className="text-xl font-bold text-gray-700">Page {page}</span>
-                            <button onClick={() => setPage(page + 1)} disabled={stars.length < 50} className="px-6 py-2 bg-blue-600 text-white font-bold rounded shadow-md hover:bg-blue-700 disabled:bg-gray-400 transition-colors">Next</button>
+                                            {/* Star Name & Type */}
+                                            <div className="flex justify-between items-start mb-4">
+                                                <h2 className="text-2xl font-bold text-white tracking-wider group-hover:text-indigo-300 transition-colors">
+                                                    {star.name}
+                                                </h2>
+                                                <span className="px-3 py-1 bg-indigo-900/50 text-indigo-300 text-xs rounded-full border border-indigo-500/30">
+                                                    Type {star.spectral_type || '?'}
+                                                </span>
+                                            </div>
+
+                                            {/* System Data */}
+                                            <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-6">
+                                                <p className="flex items-center gap-1">
+                                                    <span className="text-indigo-500">Temp:</span> {star.temperature_k ? `${star.temperature_k} K` : 'Unknown'}
+                                                </p>
+                                                <p className="flex items-center gap-1">
+                                                    <span className="text-indigo-500">Dist:</span> {star.distance_ly ? `${star.distance_ly} LY` : 'Unknown'}
+                                                </p>
+                                            </div>
+
+                                            {/* The Planets Radar (Visual Data) */}
+                                            <div className="pt-4 border-t border-indigo-500/20">
+                                                <h4 className="text-xs text-indigo-400 uppercase tracking-widest mb-3">Orbiting Bodies ({starPlanets.length})</h4>
+
+                                                {starPlanets.length === 0 ? (
+                                                    <p className="text-sm text-gray-600 italic">No planetary data available.</p>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        {starPlanets.map(planet => (
+                                                            <div key={planet.id} className="flex items-center justify-between text-sm">
+                                                                <span className="text-gray-300">{planet.name}</span>
+                                                                {/* Glowing Status Dot */}
+                                                                <span className="flex items-center gap-2 text-xs">
+                                                                    {planet.is_habitable ? (
+                                                                        <span className="text-green-400 flex items-center gap-1 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)]">
+                                                                            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                                                                            Habitable
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-red-900 flex items-center gap-1">
+                                                                            <div className="w-2 h-2 rounded-full bg-red-900"></div>
+                                                                            Hostile
+                                                                        </span>
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Link>
+                                    </div>
+                                )
+                            })}
+                        </div>
+
+                        {/* Pagination Controls */}
+                        <div className="flex justify-center items-center gap-6 my-12">
+                            <button onClick={() => setPage(page - 1)} disabled={page === 1} className="px-6 py-2 bg-indigo-900/50 border border-indigo-500/50 text-indigo-300 uppercase tracking-widest rounded-full hover:bg-indigo-600/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">Previous Data</button>
+                            <span className="text-lg font-bold text-gray-400 tracking-widest">PAGE {page}</span>
+                            <button onClick={() => setPage(page + 1)} disabled={stars.length < 50} className="px-6 py-2 bg-indigo-900/50 border border-indigo-500/50 text-indigo-300 uppercase tracking-widest rounded-full hover:bg-indigo-600/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">Next Data</button>
                         </div>
                     </div>
                 )}
