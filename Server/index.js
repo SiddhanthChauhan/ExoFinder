@@ -1,6 +1,7 @@
+const cors = require("cors");
 const express = require("express");
 const app = express();
-const cors = require("cors");
+
 const mysql = require("mysql2");
 //load the passwords
 require('dotenv').config();
@@ -8,10 +9,21 @@ const { GoogleGenAI } = require('@google/genai');
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 
+
+//To allow frontend - backend call
+app.use(cors({
+    origin: [
+        'https://exofinder.vercel.app', 
+        'https://exofinder-siddhanthchauhans-projects.vercel.app',
+        'http://localhost:3000',
+        'http://localhost:5173'
+    ],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    credentials: true
+}));
+
 //To recieve JSON data FROM frontend
 app.use(express.json());
-//To allow frontend - backend call
-app.use(cors());
 
 //Connecting the DB
 const db = mysql.createConnection({
