@@ -4,6 +4,9 @@ const cors = require("cors");
 const mysql = require("mysql2");
 //load the passwords
 require('dotenv').config();
+const { GoogleGenAI } = require('@google/genai');
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
 
 //To recieve JSON data FROM frontend
 app.use(express.json());
@@ -24,7 +27,7 @@ db.connect((err) => {
         console.error("❌ Error connecting to MySQL:", err.message);
         return;
     }
-    console.log("✅ Connected to MySQL Database 'exofinder'!");
+    console.log("✅ Connected to TiDB MySQL Cloud Database 'exofinder'!");
 })
 
 //Check server running
@@ -107,6 +110,33 @@ app.get('/stars/:id', (req, res) => {
         })
     })
 })
+
+// AI LORE GENERATOR ENDPOINT
+app.post('/api/lore', async (req, res) => {
+    try {
+        // 1. Receive the star data from the frontend
+        const { starName, spectralType, distance, planetsCount } = req.body;
+
+        // 2. Build the exact prompt for Gemini
+        const prompt = `You are a futuristic starship tactical computer. 
+        Write a strict 2-sentence system analysis for a star named ${starName}. 
+        Data: Spectral Type is ${spectralType || 'Unknown'}, Distance is ${distance || 'Unknown'} light years, Orbiting planets: ${planetsCount}. 
+        Tone: Cold, analytical, sci-fi, and professional. Do not use quotation marks or conversational greetings.`;
+
+        // 3. Ask Gemini to generate the content
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+
+        // 4. Send the text back to the frontend
+        res.json({ lore: response.text });
+
+    } catch (error) {
+        console.error("AI Generation Error:", error);
+        res.status(500).json({ error: "Tactical computer offline. Unable to generate lore." });
+    }
+});
 
 const PORT = 3001;
 app.listen(PORT, () => {

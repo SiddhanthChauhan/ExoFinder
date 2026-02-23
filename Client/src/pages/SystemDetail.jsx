@@ -30,11 +30,38 @@ function SystemDetail() {
     const { id } = useParams();
     const [systemData, setSystemData] = useState(null);
 
+    //for the gemini call
+    const [aiLore, setAiLore] = useState("");
+    const [isGenerating, setIsGenerating] = useState(false);
+
     useEffect(() => {
         axios.get(`http://localhost:3001/stars/${id}`)
             .then(res => setSystemData(res.data))
             .catch(err => console.error(err));
     }, [id]);
+
+    // Trigger AI Lore Generation once systemData loads
+    useEffect(() => {
+        if (systemData && systemData.star) {
+            setIsGenerating(true);
+
+            axios.post('http://localhost:3001/api/lore', {
+                starName: systemData.star.name,
+                spectralType: systemData.star.spectral_type,
+                distance: systemData.star.distance_ly,
+                planetsCount: systemData.planets.length
+            })
+                .then(res => {
+                    setAiLore(res.data.lore);
+                    setIsGenerating(false);
+                })
+                .catch(err => {
+                    console.error("Comm link severed:", err);
+                    setAiLore("WARNING: Subspace telemetry link severed. Tactical analysis offline.");
+                    setIsGenerating(false);
+                });
+        }
+    }, [systemData]);
 
     //temporary loading screen
     if (!systemData) return <div className="text-center mt-20 text-2xl font-bold">Loading the universe...</div>;
@@ -85,13 +112,24 @@ function SystemDetail() {
                     {/* Decorative corner bracket */}
                     <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-indigo-400 rounded-tl-lg"></div>
 
-                    <h3 className="text-xs font-bold text-indigo-400 tracking-[0.3em] uppercase mb-4">Computer Analysis</h3>
-                    <p className="text-indigo-100 text-xl leading-relaxed font-light tracking-wide">
-                        {star.lore
-                            ? star.lore
-                            : `Spectral analysis confirms a ${star.spectral_type || 'unclassified'}-type star located ${star.distance_ly ? star.distance_ly + ' light years' : 'at unknown depth'} from Earth. Scanning for habitability signatures...`
-                        }
-                    </p>
+                    <h3 className="text-xs font-bold text-indigo-400 tracking-[0.3em] uppercase mb-4 flex items-center gap-3">
+                        Computer Analysis
+                        {isGenerating && <span className="flex gap-1"><span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span><span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span><span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span></span>}
+                    </h3>
+
+                    <div className="min-h-[80px]">
+                        {isGenerating ? (
+                            <p className="text-indigo-300/70 text-lg leading-relaxed font-mono uppercase animate-pulse">
+                                &gt; Establishing subspace link...<br />
+                                &gt; Compiling telemetry...<br />
+                                &gt; Awaiting AI tactical response...
+                            </p>
+                        ) : (
+                            <p className="text-indigo-100 text-xl leading-relaxed font-light tracking-wide">
+                                {aiLore || star.lore}
+                            </p>
+                        )}
+                    </div>
                 </div>
 
                 {/* --- SYSTEM TELEMETRY GRID --- */}
