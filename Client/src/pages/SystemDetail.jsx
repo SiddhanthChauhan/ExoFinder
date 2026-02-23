@@ -35,7 +35,7 @@ function SystemDetail() {
     const [isGenerating, setIsGenerating] = useState(false);
 
     useEffect(() => {
-        axios.get(`http://localhost:3001/stars/${id}`)
+        axios.get(`https://exofinder-api-t7hb.onrender.com/stars/${id}`)
             .then(res => setSystemData(res.data))
             .catch(err => console.error(err));
     }, [id]);
@@ -45,7 +45,7 @@ function SystemDetail() {
         if (systemData && systemData.star) {
             setIsGenerating(true);
 
-            axios.post('http://localhost:3001/api/lore', {
+            axios.post('https://exofinder-api-t7hb.onrender.com/api/lore', {
                 starName: systemData.star.name,
                 spectralType: systemData.star.spectral_type,
                 distance: systemData.star.distance_ly,

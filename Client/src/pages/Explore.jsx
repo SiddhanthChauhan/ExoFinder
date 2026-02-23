@@ -22,12 +22,12 @@ function Explore() {
 
     useEffect(() => {
         // 1. Fetch Stars
-        axios.get(`http://localhost:3001/stars?search=${searchTerm}&page=${page}`)
+        axios.get(`https://exofinder-api-t7hb.onrender.com/stars?search=${searchTerm}&page=${page}`)
             .then(res => setStars(res.data))
             .catch(err => console.error(err));
 
         // 2. Fetch Planets
-        axios.get('http://localhost:3001/planets')
+        axios.get('https://exofinder-api-t7hb.onrender.com/planets')
             .then(res => setPlanets(res.data))
             .catch(err => console.error(err));
     }, [searchTerm, page])
@@ -37,7 +37,7 @@ function Explore() {
     useEffect(() => {
         if (viewMode === 'radar') {
             // 1. Download the massive tank of stars
-            axios.get('http://localhost:3001/stars?limit=all')
+            axios.get('https://exofinder-api-t7hb.onrender.com/stars?limit=all')
                 .then(res => {
                     const fullUniverse = res.data;
                     setGamePool(fullUniverse);
