@@ -150,9 +150,11 @@ app.post('/api/ask-ai', async (req, res) => {
 
         // Ask Gemini to generate the content
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.5-flash',
             contents: prompt,
         });
+
+
 
         // Send the AI's answer back to the React frontend
         res.status(200).json({ answer: response.text });
