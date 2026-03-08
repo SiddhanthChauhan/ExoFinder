@@ -127,6 +127,41 @@ app.get('/stars/:id', (req, res) => {
         })
     })
 })
+// AI SYSTEM CHATBOT ENDPOINT
+app.post('/api/ask-ai', async (req, res) => {
+    try {
+        // Receive the user's question AND the data of the system they are viewing
+        const { question, systemData } = req.body;
+
+        // Build the context-aware prompt
+        const prompt = `
+            You are an expert astrophysics AI assistant integrated into the 'ExoFinder' terminal. 
+            The user is currently viewing the following exoplanetary system:
+            - Star Name: ${systemData.star?.name || 'Unknown'}
+            - Spectral Type: ${systemData.star?.spectral_type || 'Unknown'}
+            - Distance: ${systemData.star?.distance || 'Unknown'} parsecs
+            - Number of Planets: ${systemData.planets?.length || 0}
+            
+            Based on astrophysics facts and this system data, answer the user's question. 
+            Keep it concise, scientific, and fascinating.
+            
+            User Question: ${question}
+        `;
+
+        // Ask Gemini to generate the content
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+
+        // Send the AI's answer back to the React frontend
+        res.status(200).json({ answer: response.text });
+
+    } catch (error) {
+        console.error("AI Chat Error:", error);
+        res.status(500).json({ error: "Comms link severed. Unable to reach AI core." });
+    }
+});
 
 // AI LORE GENERATOR ENDPOINT
 app.post('/api/lore', async (req, res) => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState,useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import SkyMap from '../components/SkyMap';
@@ -34,6 +34,14 @@ function SystemDetail() {
     const [aiLore, setAiLore] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
 
+    // AI Chatbot State
+    const [chatInput, setChatInput] = useState("");
+    const [chatHistory, setChatHistory] = useState([
+        { role: 'ai', text: "Tactical computer online. What do you wish to know about this sector?" }
+    ]);
+    const [isChatLoading, setIsChatLoading] = useState(false);
+    const chatScrollRef = useRef(null);
+
     useEffect(() => {
         axios.get(`https://exofinder-api-t7hb.onrender.com/stars/${id}`)
             .then(res => setSystemData(res.data))
@@ -62,6 +70,38 @@ function SystemDetail() {
                 });
         }
     }, [systemData]);
+
+    // Scrolling to the bottom of the chat for recency
+    useEffect(() => {
+        if (chatScrollRef.current) {
+            chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+        }
+    }, [chatHistory, isChatLoading]);
+
+    // Handle AI Chat Submission
+    const handleAskAI = async (e) => {
+        e.preventDefault();
+        if (!chatInput.trim()) return;
+
+        const userText = chatInput;
+        setChatInput(""); // Clear input immediately
+        setChatHistory(prev => [...prev, { role: 'user', text: userText }]);
+        setIsChatLoading(true);
+
+        try {
+            const response = await axios.post('https://exofinder-api-t7hb.onrender.com/api/ask-ai', {
+                question: userText,
+                systemData: systemData // Pass the contextual data!
+            });
+
+            setChatHistory(prev => [...prev, { role: 'ai', text: response.data.answer }]);
+        } catch (error) {
+            console.error("Chat error", error);
+            setChatHistory(prev => [...prev, { role: 'ai', text: "ERROR: Comms link severed. Unable to reach AI core." }]);
+        } finally {
+            setIsChatLoading(false);
+        }
+    };
 
     //temporary loading screen
     if (!systemData) return <div className="text-center mt-20 text-2xl font-bold">Loading the universe...</div>;
@@ -220,7 +260,63 @@ function SystemDetail() {
                     </div>
                 </div>
 
-            </div> {/* <--- THIS CLOSES THE MAIN relative z-10 WINDOW */}
+                {/* --- INTERACTIVE TACTICAL AI CHATBOT --- */}
+                <div className="mt-8 bg-[#0a0a1a] backdrop-blur-md p-6 rounded-3xl border border-indigo-500/30 shadow-[0_0_20px_rgba(0,0,0,0.5)] flex flex-col h-[400px]">
+                    <h3 className="text-lg font-bold text-indigo-400 mb-4 tracking-[0.2em] uppercase flex items-center gap-2">
+                        <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
+                        AI Query Terminal
+                    </h3>
+                    
+                    {/* Chat History Window */}
+                    <div 
+                        ref={chatScrollRef}
+                        className="flex-1 overflow-y-auto mb-4 pr-2 space-y-4 scrollbar-thin scrollbar-thumb-indigo-500/50 scrollbar-track-transparent"
+                    >
+                        {chatHistory.map((msg, idx) => (
+                            <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                <span className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-mono">
+                                    {msg.role === 'user' ? 'GUEST_USER' : 'SYSTEM_AI'}
+                                </span>
+                                <div className={`px-4 py-3 rounded-2xl max-w-[85%] text-sm md:text-base font-light tracking-wide leading-relaxed ${
+                                    msg.role === 'user' 
+                                    ? 'bg-indigo-600/40 border border-indigo-500/50 text-white rounded-tr-none' 
+                                    : 'bg-indigo-950/40 border border-indigo-400/20 text-indigo-100 rounded-tl-none'
+                                }`}>
+                                    {msg.text}
+                                </div>
+                            </div>
+                        ))}
+                        {isChatLoading && (
+                            <div className="flex flex-col items-start">
+                                <span className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-mono">SYSTEM_AI</span>
+                                <div className="px-4 py-3 bg-indigo-950/40 border border-indigo-400/20 rounded-2xl rounded-tl-none text-indigo-300/70 text-sm font-mono animate-pulse">
+                                    &gt; Processing query...
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Chat Input Field */}
+                    <form onSubmit={handleAskAI} className="flex gap-3 mt-auto">
+                        <input 
+                            type="text" 
+                            value={chatInput}
+                            onChange={(e) => setChatInput(e.target.value)}
+                            placeholder={`Inquire about ${star.name}...`}
+                            className="flex-1 bg-indigo-950/30 border border-indigo-500/30 text-white placeholder-indigo-300/30 px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-all font-light"
+                            disabled={isChatLoading}
+                        />
+                        <button 
+                            type="submit" 
+                            disabled={isChatLoading || !chatInput.trim()}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(79,70,229,0.4)]"
+                        >
+                            Transmit
+                        </button>
+                    </form>
+                </div>
+
+            </div> 
         </div>
     );
 }
