@@ -139,7 +139,7 @@ app.post('/api/ask-ai', async (req, res) => {
             The user is currently viewing the following exoplanetary system:
             - Star Name: ${systemData.star?.name || 'Unknown'}
             - Spectral Type: ${systemData.star?.spectral_type || 'Unknown'}
-            - Distance: ${systemData.star?.distance || 'Unknown'} parsecs
+            - Distance: ${systemData.star?.distance_ly || 'Unknown'} parsecs
             - Number of Planets: ${systemData.planets?.length || 0}
             
             Based on astrophysics facts and this system data, answer the user's question. 
@@ -150,7 +150,7 @@ app.post('/api/ask-ai', async (req, res) => {
 
         // Ask Gemini to generate the content
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-1.5-flash',
             contents: prompt,
         });
 
